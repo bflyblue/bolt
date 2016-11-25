@@ -184,7 +184,7 @@ getPackStream = do
        | 0xa0 <= marker && marker < 0xb0
                           -> getMap (fromIntegral marker .&. 0x0f)
        | marker == 0xd8   -> fromIntegral <$> getWord8    >>= getMap
-       | marker == 0xd8   -> fromIntegral <$> getWord16be >>= getMap
+       | marker == 0xd9   -> fromIntegral <$> getWord16be >>= getMap
        | marker == 0xda   -> fromIntegral <$> getWord32be >>= getMap
 
        | 0xb0 <= marker && marker < 0xc0
@@ -221,7 +221,7 @@ putPackStream (Int i)
     |               -0x80 <= i && i < 0x80               = putWord8 0xc8 >> putWord8    (fromIntegral i)
     |             -0x8000 <= i && i < 0x8000             = putWord8 0xc9 >> putWord16be (fromIntegral i)
     |         -0x80000000 <= i && i < 0x80000000         = putWord8 0xca >> putWord32be (fromIntegral i)
-    | otherwise                                          = putWord8 0xca >> putWord64be (fromIntegral i)
+    | otherwise                                          = putWord8 0xcb >> putWord64be (fromIntegral i)
 
 putPackStream (String t) = do
     let size = T.length t

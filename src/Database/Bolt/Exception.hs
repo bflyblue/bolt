@@ -1,4 +1,4 @@
-module Bolt.Exception
+module Database.Bolt.Exception
     ( internalErr
     , transportErr
     , protocolErr

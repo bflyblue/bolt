@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Protocol.Ver1
+module Database.Bolt.Protocol.Ver1
  ( init
  , exec
  , AuthToken(..)
@@ -10,11 +10,11 @@ module Bolt.Protocol.Ver1
 import           Prelude                    hiding (init)
 import           Control.Monad
 
-import           Bolt.Exception
-import           Bolt.Protocol.Ver1.Message (AuthToken(..))
-import           Bolt.Protocol.Ver1.Request (init, exec)
-import           Bolt.Protocol.Ver1.Types
-import           Bolt.Transport
+import           Database.Bolt.Exception
+import           Database.Bolt.Protocol.Ver1.Message (AuthToken(..))
+import           Database.Bolt.Protocol.Ver1.Request (init, exec)
+import           Database.Bolt.Protocol.Ver1.Types
+import           Database.Bolt.Transport
 
 useragent :: UserAgent
 useragent = "haskell-bolt/0.0"

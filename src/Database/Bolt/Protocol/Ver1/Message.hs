@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Protocol.Ver1.Message
+module Database.Bolt.Protocol.Ver1.Message
  ( Message(..)
  , AuthToken(..)
  )
 where
 
-import qualified Data.HashMap.Strict as HM
+import qualified Data.HashMap.Strict               as HM
 import           Data.PackStream
-import           Data.Text           (Text)
+import           Data.Text                         (Text)
 
-import           Bolt.Protocol.Ver1.Types
+import           Database.Bolt.Protocol.Ver1.Types
 
 data Message = Init UserAgent AuthToken
              | AckFailure

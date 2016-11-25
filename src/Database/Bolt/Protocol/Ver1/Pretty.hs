@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Protocol.Ver1.Pretty
+module Database.Bolt.Protocol.Ver1.Pretty
  ( pretty
  , structName
  ) where

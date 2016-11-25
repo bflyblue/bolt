@@ -16,17 +16,17 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Bolt.Exception
-                     , Bolt.Protocol.Ver1
-                     , Bolt.Protocol.Ver1.Message
-                     , Bolt.Protocol.Ver1.Pretty
-                     , Bolt.Protocol.Ver1.Request
-                     , Bolt.Protocol.Ver1.Types
-                     , Bolt.Transport
-                     , Bolt.Transport.Chunked
-                     , Bolt.Transport.Message
-                     , Bolt.Transport.Socket
-                     , Data.PackStream
+  exposed-modules:     Data.PackStream
+                     , Database.Bolt.Exception
+                     , Database.Bolt.Protocol.Ver1
+                     , Database.Bolt.Protocol.Ver1.Message
+                     , Database.Bolt.Protocol.Ver1.Pretty
+                     , Database.Bolt.Protocol.Ver1.Request
+                     , Database.Bolt.Protocol.Ver1.Types
+                     , Database.Bolt.Transport
+                     , Database.Bolt.Transport.Chunked
+                     , Database.Bolt.Transport.Message
+                     , Database.Bolt.Transport.Socket
   build-depends:       base >= 4.7 && < 5
                      , bifunctors
                      , bytestring

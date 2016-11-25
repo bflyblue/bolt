@@ -1,4 +1,4 @@
-module Bolt.Protocol.Ver1.Types where
+module Database.Bolt.Protocol.Ver1.Types where
 
 import qualified Data.HashMap.Strict as HM
 import           Data.PackStream

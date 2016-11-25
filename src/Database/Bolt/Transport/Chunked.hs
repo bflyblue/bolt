@@ -1,23 +1,23 @@
-{-# LANGUAGE MultiWayIf          #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE MultiWayIf        #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Transport.Chunked
+module Database.Bolt.Transport.Chunked
     ( send
     , recv
     , put
     , get
     ) where
 
-import qualified Data.ByteString           as BS
-import qualified Data.ByteString.Lazy      as LBS
+import qualified Data.ByteString         as BS
+import qualified Data.ByteString.Lazy    as LBS
 import           Data.Monoid
 import           Data.Serialize.Get
 import           Data.Serialize.Put
-import qualified Data.Text                 as T
+import qualified Data.Text               as T
 
-import           Bolt.Transport            (Transport)
-import qualified Bolt.Transport            as Trans
-import           Bolt.Exception
+import           Database.Bolt.Exception
+import           Database.Bolt.Transport (Transport)
+import qualified Database.Bolt.Transport as Trans
 
 -------- Chunked I/O --------
 

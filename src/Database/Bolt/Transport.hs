@@ -1,6 +1,6 @@
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Transport
+module Database.Bolt.Transport
     ( Transport(..)
     , put
     , get
@@ -11,14 +11,14 @@ module Bolt.Transport
     , noProto
     ) where
 
-import qualified Data.ByteString as BS
+import qualified Data.ByteString         as BS
 import           Data.Monoid
 import           Data.Serialize.Get
 import           Data.Serialize.Put
-import           Data.Text as T
+import           Data.Text               as T
 import           Data.Word
 
-import           Bolt.Exception
+import           Database.Bolt.Exception
 
 -- Transport
 

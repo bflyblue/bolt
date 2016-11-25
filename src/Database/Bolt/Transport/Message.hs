@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Transport.Message
+module Database.Bolt.Transport.Message
     ( sendmsg
     , recvmsg
     ) where
 
 import           Data.Monoid
 import           Data.PackStream
-import qualified Data.Text              as T
+import qualified Data.Text                       as T
 
-import           Bolt.Exception
-import           Bolt.Transport         (Transport)
-import qualified Bolt.Transport.Chunked as Chunked
+import           Database.Bolt.Exception
+import           Database.Bolt.Transport         (Transport)
+import qualified Database.Bolt.Transport.Chunked as Chunked
 
 -------- Message I/O --------
 

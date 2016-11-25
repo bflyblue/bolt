@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Bolt.Transport.Socket
+module Database.Bolt.Transport.Socket
     ( ConnInfo
     , hostserv
     , uri
@@ -26,8 +26,8 @@ import qualified Network.Socket            as Net
 import qualified Network.Socket.ByteString as NetBS
 import           Network.URI
 
-import           Bolt.Exception
-import           Bolt.Transport
+import           Database.Bolt.Exception
+import           Database.Bolt.Transport
 
 -------- Socket --------
 

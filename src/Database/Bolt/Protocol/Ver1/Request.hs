@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Bolt.Protocol.Ver1.Request
+module Database.Bolt.Protocol.Ver1.Request
  ( init
  , reset
  , discardAll
@@ -9,14 +9,14 @@ module Bolt.Protocol.Ver1.Request
  , exec
  ) where
 
-import           Prelude                    hiding (init)
+import           Prelude                             hiding (init)
 
-import           Bolt.Exception
-import           Bolt.Protocol.Ver1.Message (AuthToken, Message)
-import qualified Bolt.Protocol.Ver1.Message as Msg
-import           Bolt.Protocol.Ver1.Types
-import           Bolt.Transport
-import           Bolt.Transport.Message
+import           Database.Bolt.Exception
+import           Database.Bolt.Protocol.Ver1.Message (AuthToken, Message)
+import qualified Database.Bolt.Protocol.Ver1.Message as Msg
+import           Database.Bolt.Protocol.Ver1.Types
+import           Database.Bolt.Transport
+import           Database.Bolt.Transport.Message
 
 data Response = Success [Record]
               | Failed

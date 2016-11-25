@@ -1,0 +1,15 @@
+*.dyn_hi
+*.dyn_o
+*.hi
+*.nix
+*.o
+.*.sw?
+.cabal-sandbox
+.stack-work
+cabal.sandbox.config
+dist
+codex.tags
+tags
+.DS_Store
+*.refactored.*
+hscope.out

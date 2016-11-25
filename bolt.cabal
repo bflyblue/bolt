@@ -19,6 +19,7 @@ library
   exposed-modules:     Data.PackStream
                      , Database.Bolt.Exception
                      , Database.Bolt.Protocol.Ver1
+                     , Database.Bolt.Protocol.Ver1.Graph
                      , Database.Bolt.Protocol.Ver1.Message
                      , Database.Bolt.Protocol.Ver1.Pretty
                      , Database.Bolt.Protocol.Ver1.Request

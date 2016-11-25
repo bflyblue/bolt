@@ -50,7 +50,7 @@ instance FromPackStream Message where
             (Struct 0x71 value)                  -> return $ Record  value
             (Struct 0x7e [metadata])             -> Ignored <$> parsePackStream metadata
             (Struct 0x7f [metadata])             -> Failure <$> parsePackStream metadata
-            _                                    -> error "Invalid message"
+            _                                    -> error "Invalid Message"
 
 data AuthToken = NoAuth
                | Basic Principal Credentials

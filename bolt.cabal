@@ -1,5 +1,5 @@
 name:                bolt
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Bolt driver for Neo4j
 description:         Please see README.md
 homepage:            https://github.com/bflyblue/bolt#readme

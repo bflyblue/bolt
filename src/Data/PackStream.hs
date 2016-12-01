@@ -68,6 +68,9 @@ parseEither f = f
 parseMaybe :: (a -> Parser b) -> a -> Maybe b
 parseMaybe f = either (const Nothing) Just . parseEither f
 
+parsefail :: a -> Either a b
+parsefail = Left
+
 class FromPackStream a where
     parsePackStream :: PackStream -> Parser a
 
@@ -76,27 +79,27 @@ instance FromPackStream PackStream where
 
 instance FromPackStream Bool where
     parsePackStream (Bool b) = return b
-    parsePackStream _        = fail "Expecting Bool"
+    parsePackStream _        = parsefail "Expecting Bool"
 
 instance FromPackStream Int64 where
     parsePackStream (Int i) = return i
-    parsePackStream _       = fail "Expecting Int"
+    parsePackStream _       = parsefail "Expecting Int"
 
 instance FromPackStream Double where
     parsePackStream (Float d) = return d
-    parsePackStream _         = fail "Expecting Float"
+    parsePackStream _         = parsefail "Expecting Float"
 
 instance FromPackStream Text where
     parsePackStream (String t) = return t
-    parsePackStream _          = fail "Expecting String"
+    parsePackStream _          = parsefail "Expecting String"
 
 instance FromPackStream a => FromPackStream [a] where
     parsePackStream (List l) = mapM parsePackStream (V.toList l)
-    parsePackStream _        = fail "Expecting List"
+    parsePackStream _        = parsefail "Expecting List"
 
 instance FromPackStream a => FromPackStream (V.Vector a) where
     parsePackStream (List l) = mapM parsePackStream l
-    parsePackStream _        = fail "Expecting List"
+    parsePackStream _        = parsefail "Expecting List"
 
 instance (Eq a, Hashable a, FromPackStream a, FromPackStream b) => FromPackStream (HM.HashMap a b) where
     parsePackStream (Map m) = do
@@ -105,7 +108,7 @@ instance (Eq a, Hashable a, FromPackStream a, FromPackStream b) => FromPackStrea
       where
         parseAssoc (k, v) = (,) <$> parsePackStream k <*> parsePackStream v
 
-    parsePackStream _ = fail "Expecting Map"
+    parsePackStream _ = parsefail "Expecting Map"
 
 instance (Ord a, FromPackStream a, FromPackStream b) => FromPackStream (M.Map a b) where
     parsePackStream (Map m) = do
@@ -114,7 +117,7 @@ instance (Ord a, FromPackStream a, FromPackStream b) => FromPackStream (M.Map a 
       where
         parseAssoc (k, v) = (,) <$> parsePackStream k <*> parsePackStream v
 
-    parsePackStream _ = fail "Expecting Map"
+    parsePackStream _ = parsefail "Expecting Map"
 
 class ToPackStream a where
     toPackStream :: a -> PackStream
@@ -191,7 +194,7 @@ getPackStream = do
                           -> getStruct (fromIntegral marker .&. 0x0f)
        | marker == 0xdc   -> fromIntegral <$> getWord8    >>= getStruct
        | marker == 0xdd   -> fromIntegral <$> getWord16be >>= getStruct
-       | otherwise        -> fail $ "Unknown marker " ++ printf "0x%02x" marker
+       | otherwise        -> parsefail $ "Unknown marker " ++ printf "0x%02x" marker
 
 getString :: Int -> Get PackStream
 getString n = String . T.decodeUtf8 <$> getByteString n
@@ -229,7 +232,7 @@ putPackStream (String t) = do
        | size < 0x100        -> putWord8 0xd0 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd1 >> putWord16be (fromIntegral size)
        | size < 0x100000000  -> putWord8 0xd2 >> putWord16be (fromIntegral size)
-       | otherwise           -> fail "String too long"
+       | otherwise           -> error "String too long"
     putByteString $ T.encodeUtf8 t
 
 putPackStream (List xs) = do
@@ -238,7 +241,7 @@ putPackStream (List xs) = do
        | size < 0x100        -> putWord8 0xd4 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd5 >> putWord16be (fromIntegral size)
        | size < 0x100000000  -> putWord8 0xd6 >> putWord16be (fromIntegral size)
-       | otherwise           -> fail "List too long"
+       | otherwise           -> error "List too long"
     mapM_ putPackStream xs
 
 putPackStream (Map m) = do
@@ -247,7 +250,7 @@ putPackStream (Map m) = do
        | size < 0x100        -> putWord8 0xd8 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd9 >> putWord16be (fromIntegral size)
        | size < 0x100000000  -> putWord8 0xda >> putWord16be (fromIntegral size)
-       | otherwise           -> fail "Map too large"
+       | otherwise           -> error "Map too large"
     mapM_ (uncurry putPair) (HM.toList m)
   where
     putPair k v = putPackStream k >> putPackStream v
@@ -257,7 +260,7 @@ putPackStream (Struct sig fs) = do
     if | size < 0x10         -> putWord8 (0xb0 + fromIntegral size)
        | size < 0x100        -> putWord8 0xdc >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xdd >> putWord16be (fromIntegral size)
-       | otherwise           -> fail "Structure too big"
+       | otherwise           -> error "Structure too big"
     putWord8 sig
     mapM_ putPackStream fs
 

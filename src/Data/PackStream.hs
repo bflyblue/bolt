@@ -194,7 +194,7 @@ getPackStream = do
                           -> getStruct (fromIntegral marker .&. 0x0f)
        | marker == 0xdc   -> fromIntegral <$> getWord8    >>= getStruct
        | marker == 0xdd   -> fromIntegral <$> getWord16be >>= getStruct
-       | otherwise        -> parsefail $ "Unknown marker " ++ printf "0x%02x" marker
+       | otherwise        -> fail $ "Unknown marker " ++ printf "0x%02x" marker
 
 getString :: Int -> Get PackStream
 getString n = String . T.decodeUtf8 <$> getByteString n
@@ -232,7 +232,7 @@ putPackStream (String t) = do
        | size < 0x100        -> putWord8 0xd0 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd1 >> putWord16be (fromIntegral size)
        | size < 0x100000000  -> putWord8 0xd2 >> putWord16be (fromIntegral size)
-       | otherwise           -> error "String too long"
+       | otherwise           -> fail "String too long"
     putByteString $ T.encodeUtf8 t
 
 putPackStream (List xs) = do
@@ -241,7 +241,7 @@ putPackStream (List xs) = do
        | size < 0x100        -> putWord8 0xd4 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd5 >> putWord16be (fromIntegral size)
        | size < 0x100000000  -> putWord8 0xd6 >> putWord16be (fromIntegral size)
-       | otherwise           -> error "List too long"
+       | otherwise           -> fail "List too long"
     mapM_ putPackStream xs
 
 putPackStream (Map m) = do
@@ -250,7 +250,7 @@ putPackStream (Map m) = do
        | size < 0x100        -> putWord8 0xd8 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd9 >> putWord16be (fromIntegral size)
        | size < 0x100000000  -> putWord8 0xda >> putWord16be (fromIntegral size)
-       | otherwise           -> error "Map too large"
+       | otherwise           -> fail "Map too large"
     mapM_ (uncurry putPair) (HM.toList m)
   where
     putPair k v = putPackStream k >> putPackStream v
@@ -260,7 +260,7 @@ putPackStream (Struct sig fs) = do
     if | size < 0x10         -> putWord8 (0xb0 + fromIntegral size)
        | size < 0x100        -> putWord8 0xdc >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xdd >> putWord16be (fromIntegral size)
-       | otherwise           -> error "Structure too big"
+       | otherwise           -> fail "Structure too big"
     putWord8 sig
     mapM_ putPackStream fs
 
@@ -285,7 +285,7 @@ genericStructName n = "Struct(signature=" <> T.pack (printf "0x%02x" n) <> ")"
 k .= v = (String k, toPackStream v)
 
 (.:) :: FromPackStream a => HM.HashMap PackStream PackStream -> Text -> Parser a
-m .: k = maybe (error "Expected Key missing in map") parsePackStream (HM.lookup (String k) m)
+m .: k = maybe (parsefail "Expected Key missing in map") parsePackStream (HM.lookup (String k) m)
 
 (.:?) :: FromPackStream a => HM.HashMap PackStream PackStream -> Text -> Parser (Maybe a)
 m .:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup (String k) m)

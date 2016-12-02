@@ -34,7 +34,7 @@ instance ToPackStream Message where
     toPackStream (Success metadata)         = Struct 0x70 [toPackStream metadata]
     toPackStream (Ignored metadata)         = Struct 0x71 [toPackStream metadata]
     toPackStream (Failure metadata)         = Struct 0x7e [toPackStream metadata]
-    toPackStream (Record  record)           = Struct 0x7f record
+    toPackStream (Record  record)           = Struct 0x7f [toPackStream record]
 
 instance FromPackStream Message where
     parsePackStream s = do
@@ -47,7 +47,7 @@ instance FromPackStream Message where
             (Struct 0x2f [])                     -> return DiscardAll
             (Struct 0x3f [])                     -> return PullAll
             (Struct 0x70 [metadata])             -> Success <$> parsePackStream metadata
-            (Struct 0x71 value)                  -> return $ Record  value
+            (Struct 0x71 [record])               -> Record <$> parsePackStream record
             (Struct 0x7e [metadata])             -> Ignored <$> parsePackStream metadata
             (Struct 0x7f [metadata])             -> Failure <$> parsePackStream metadata
             _                                    -> error "Invalid Message"

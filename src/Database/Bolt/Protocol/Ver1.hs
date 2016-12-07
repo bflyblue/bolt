@@ -8,6 +8,10 @@ module Database.Bolt.Protocol.Ver1
  , Transaction
  , runTransaction
  , cypher
+ , object
+ , (#=)
+ , (#:)
+ , (#:?)
  ) where
 
 import           Control.Monad

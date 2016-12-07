@@ -16,11 +16,13 @@ module Data.PackStream
   , pretty
   , prettyStruct
   , genericStructName
-  , (#=)
   , (.=)
   , (.:)
   , (.:?)
   , (.!=)
+  , (#=)
+  , (#:)
+  , (#:?)
   )
 where
 
@@ -282,11 +284,8 @@ prettyStruct sn (Struct s fs)  = sn s <> "{" <> T.intercalate ", " (pretty <$> f
 genericStructName :: Word8 -> Text
 genericStructName n = "Struct(signature=" <> T.pack (printf "0x%02x" n) <> ")"
 
-(#=) :: ToPackStream a => Text -> a -> (PackStream, PackStream)
-k #= v = (String k, toPackStream v)
-
-(.=) :: ToPackStream a => Text -> a -> (Text, PackStream)
-k .= v = (k, toPackStream v)
+(.=) :: ToPackStream a => Text -> a -> (PackStream, PackStream)
+k .= v = (String k, toPackStream v)
 
 (.:) :: FromPackStream a => HM.HashMap PackStream PackStream -> Text -> Parser a
 m .: k = maybe (parsefail "Expected Key missing in map") parsePackStream (HM.lookup (String k) m)
@@ -298,3 +297,12 @@ m .:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup (Strin
 p .!= d = do
     ma <- p
     maybe (return d) return ma
+
+(#=) :: ToPackStream a => Text -> a -> (Text, PackStream)
+k #= v = (k, toPackStream v)
+
+(#:) :: FromPackStream a => HM.HashMap Text PackStream -> Text -> Parser a
+m #: k = maybe (parsefail "Expected Key missing in object") parsePackStream (HM.lookup k m)
+
+(#:?) :: FromPackStream a => HM.HashMap Text PackStream -> Text -> Parser (Maybe a)
+m #:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup k m)

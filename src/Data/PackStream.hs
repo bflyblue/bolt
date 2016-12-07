@@ -9,6 +9,7 @@ module Data.PackStream
   , FromPackStream(..)
   , Parser
   , parse
+  , parsefail
   , parseEither
   , parseMaybe
   , pack
@@ -20,9 +21,6 @@ module Data.PackStream
   , (.:)
   , (.:?)
   , (.!=)
-  , (#=)
-  , (#:)
-  , (#:?)
   )
 where
 
@@ -297,12 +295,3 @@ m .:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup (Strin
 p .!= d = do
     ma <- p
     maybe (return d) return ma
-
-(#=) :: ToPackStream a => Text -> a -> (Text, PackStream)
-k #= v = (k, toPackStream v)
-
-(#:) :: FromPackStream a => HM.HashMap Text PackStream -> Text -> Parser a
-m #: k = maybe (parsefail "Expected Key missing in object") parsePackStream (HM.lookup k m)
-
-(#:?) :: FromPackStream a => HM.HashMap Text PackStream -> Text -> Parser (Maybe a)
-m #:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup k m)

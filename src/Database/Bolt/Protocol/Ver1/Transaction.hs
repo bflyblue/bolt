@@ -1,3 +1,4 @@
+{-# LANGUAGE Rank2Types                 #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 
@@ -16,10 +17,12 @@ import           Database.Bolt.Protocol.Ver1.Request
 import           Database.Bolt.Protocol.Ver1.Types
 import           Database.Bolt.Transport
 
-newtype Transaction t a = Transaction { unTransaction :: ReaderT t IO a }
+newtype Tran t a = Tran { unTransaction :: ReaderT t IO a }
     deriving (Functor, Applicative, Monad, MonadIO)
 
-runTransaction :: Transport t => t -> Transaction t a -> IO a
+type Transaction a = forall t. Transport t => Tran t a
+
+runTransaction :: Transport t => t -> Transaction a -> IO a
 runTransaction conn t = do
     _ <- exec conn "BEGIN" HM.empty
     r <- try $ runReaderT (unTransaction t) conn
@@ -31,10 +34,10 @@ runTransaction conn t = do
             _ <- exec conn "COMMIT" HM.empty
             return a
 
-getConn :: Transaction t t
-getConn = Transaction ask
+getConn :: Tran t t
+getConn = Tran ask
 
-cypher :: Transport t => Statement -> Parameters -> Transaction t [Record]
+cypher :: Statement -> Parameters -> Transaction [Record]
 cypher stmt params = do
     conn <- getConn
     liftIO $ exec conn stmt params

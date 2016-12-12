@@ -32,6 +32,7 @@ import qualified Data.HashMap.Strict    as HM
 import           Data.Int
 import qualified Data.Map.Strict        as M
 import           Data.Monoid
+import           Data.Scientific
 import           Data.Serialize.Get
 import           Data.Serialize.IEEE754
 import           Data.Serialize.Put
@@ -120,6 +121,11 @@ instance (Ord a, FromPackStream a, FromPackStream b) => FromPackStream (M.Map a 
 
     parsePackStream _ = parsefail "Expecting Map"
 
+instance FromPackStream Scientific where
+    parsePackStream (Int i)   = return $ fromIntegral i
+    parsePackStream (Float f) = return $ fromFloatDigits f
+    parsePackStream _         = parsefail "Expecting Int or Float"
+
 class ToPackStream a where
     toPackStream :: a -> PackStream
 
@@ -149,6 +155,12 @@ instance (ToPackStream a, ToPackStream b) => ToPackStream (M.Map a b) where
 
 instance (ToPackStream a, ToPackStream b) => ToPackStream (HM.HashMap a b) where
     toPackStream = Map . HM.fromList . fmap (bimap toPackStream toPackStream) . HM.toList
+
+instance ToPackStream Scientific where
+    toPackStream s =
+        case Data.Scientific.floatingOrInteger s of
+            Left rf -> Float rf
+            Right i -> Int i
 
 pack :: ToPackStream a => Putter a
 pack = putPackStream . toPackStream

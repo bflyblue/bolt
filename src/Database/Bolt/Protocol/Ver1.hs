@@ -5,14 +5,22 @@ module Database.Bolt.Protocol.Ver1
  , exec
  , AuthToken(..)
  , open
+ , Transaction
+ , runTransaction
+ , cypher
+ , object
+ , (#=)
+ , (#:)
+ , (#:?)
  ) where
 
-import           Prelude                    hiding (init)
 import           Control.Monad
+import           Prelude                                 hiding (init)
 
 import           Database.Bolt.Exception
-import           Database.Bolt.Protocol.Ver1.Message (AuthToken(..))
-import           Database.Bolt.Protocol.Ver1.Request (init, exec)
+import           Database.Bolt.Protocol.Ver1.Message     (AuthToken (..))
+import           Database.Bolt.Protocol.Ver1.Request     (exec, init)
+import           Database.Bolt.Protocol.Ver1.Transaction (Transaction, cypher, runTransaction)
 import           Database.Bolt.Protocol.Ver1.Types
 import           Database.Bolt.Transport
 

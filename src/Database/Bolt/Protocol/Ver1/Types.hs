@@ -1,6 +1,7 @@
 module Database.Bolt.Protocol.Ver1.Types where
 
 import           Data.Int
+import           Data.Hashable
 import qualified Data.HashMap.Strict as HM
 import           Data.PackStream
 import           Data.Text           (Text)
@@ -18,6 +19,9 @@ type Parameters  = Object
 type Properties  = Object
 type Metadata    = Object
 type Record      = [PackStream]
+
+object :: (Eq k, Hashable k) => [(k, v)] -> HM.HashMap k v
+object = HM.fromList
 
 (#=) :: ToPackStream a => Text -> a -> (Text, PackStream)
 k #= v = (k, toPackStream v)

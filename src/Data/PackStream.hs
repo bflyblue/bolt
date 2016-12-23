@@ -181,10 +181,10 @@ getPackStream = do
 
        | marker <  0x80   -> return $ Int (fromIntegral marker)
        | marker >= 0xf0   -> return $ Int (fromIntegral marker - 0x100)
-       | marker == 0xc8   -> Int . fromIntegral <$> getWord8
-       | marker == 0xc9   -> Int . fromIntegral <$> getWord16be
-       | marker == 0xca   -> Int . fromIntegral <$> getWord32be
-       | marker == 0xcb   -> Int . fromIntegral <$> getWord64be
+       | marker == 0xc8   -> Int . fromIntegral <$> getInt8
+       | marker == 0xc9   -> Int . fromIntegral <$> getInt16be
+       | marker == 0xca   -> Int . fromIntegral <$> getInt32be
+       | marker == 0xcb   -> Int . fromIntegral <$> getInt64be
 
        | 0x80 <= marker && marker < 0x90
                           -> getString (fromIntegral marker .&. 0x0f)
@@ -234,11 +234,11 @@ putPackStream (Bool False)  = putWord8 0xc2
 putPackStream (Bool True)   = putWord8 0xc3
 
 putPackStream (Int i)
-    |               -0x10 <= i && i < 0x80               =                  putWord8    (fromIntegral i)
-    |               -0x80 <= i && i < 0x80               = putWord8 0xc8 >> putWord8    (fromIntegral i)
-    |             -0x8000 <= i && i < 0x8000             = putWord8 0xc9 >> putWord16be (fromIntegral i)
-    |         -0x80000000 <= i && i < 0x80000000         = putWord8 0xca >> putWord32be (fromIntegral i)
-    | otherwise                                          = putWord8 0xcb >> putWord64be (fromIntegral i)
+    |               -0x10 <= i && i < 0x80               =                  putInt8    (fromIntegral i)
+    |               -0x80 <= i && i < 0x80               = putWord8 0xc8 >> putInt8    (fromIntegral i)
+    |             -0x8000 <= i && i < 0x8000             = putWord8 0xc9 >> putInt16be (fromIntegral i)
+    |         -0x80000000 <= i && i < 0x80000000         = putWord8 0xca >> putInt32be (fromIntegral i)
+    | otherwise                                          = putWord8 0xcb >> putInt64be (fromIntegral i)
 
 putPackStream (String t) = do
     let bstr = T.encodeUtf8 t

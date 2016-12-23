@@ -27,6 +27,7 @@ where
 import           Control.Monad
 import           Data.Bifunctor
 import           Data.Bits
+import qualified Data.ByteString        as BS
 import           Data.Hashable
 import qualified Data.HashMap.Strict    as HM
 import           Data.Int
@@ -240,7 +241,8 @@ putPackStream (Int i)
     | otherwise                                          = putWord8 0xcb >> putWord64be (fromIntegral i)
 
 putPackStream (String t) = do
-    let size = T.length t
+    let bstr = T.encodeUtf8 t
+        size = BS.length bstr
     if | size < 0x10         -> putWord8 (0x80 + fromIntegral size)
        | size < 0x100        -> putWord8 0xd0 >> putWord8    (fromIntegral size)
        | size < 0x10000      -> putWord8 0xd1 >> putWord16be (fromIntegral size)

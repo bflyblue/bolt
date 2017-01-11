@@ -1,10 +1,27 @@
-module Database.Bolt.Protocol.Ver1.Types where
+module Database.Bolt.Protocol.Ver1.Types
+    ( Object
+    , object
+    , UserAgent
+    , Principal
+    , Credentials
+    , Statement
+    , Label
+    , Type
+    , Identity
+    , Parameters
+    , Properties
+    , Metadata
+    , Record
+    , (#=)
+    , (#:)
+    , (#:?)
+    ) where
 
 import qualified Data.HashMap.Strict as HM
 import           Data.Int
 import           Data.PackStream
 import           Data.Text           (Text)
-import           Database.Bolt.Types (Object)
+import           Database.Bolt.Types (Object, object)
 
 type UserAgent   = Text
 type Principal   = Text

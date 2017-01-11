@@ -8,11 +8,12 @@ module Database.Bolt.Exception
     ) where
 
 import           Control.Exception
-import           Data.Text         (Text)
+import           Data.Text           (Text)
+import           Database.Bolt.Types
 
 data BoltException = AuthenticationFailure Text
-                   | RequestFailure Text
-                   | RequestIgnored Text
+                   | RequestFailure Object Text
+                   | RequestIgnored Object Text
                    | InternalError Text
                    | TransportError Text
                    | ProtocolError Text
@@ -23,11 +24,11 @@ instance Exception BoltException
 authFail :: Text -> IO a
 authFail = throwIO . AuthenticationFailure
 
-reqFail :: Text -> IO a
-reqFail = throwIO . RequestFailure
+reqFail :: Object -> Text -> IO a
+reqFail meta = throwIO . RequestFailure meta
 
-reqIgnore :: Text -> IO a
-reqIgnore = throwIO . RequestIgnored
+reqIgnore :: Object -> Text -> IO a
+reqIgnore meta = throwIO . RequestIgnored meta
 
 internalErr :: Text -> IO a
 internalErr = throwIO . InternalError

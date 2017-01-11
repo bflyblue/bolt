@@ -18,21 +18,23 @@ import           Database.Bolt.Protocol.Ver1.Types
 import           Database.Bolt.Transport
 import           Database.Bolt.Transport.Message
 
-data Response = Success [Record]
-              | Failed
-              | Ignored
+data Response = Success Metadata [Record]
+              | Failed Metadata
+              | Ignored Metadata
 
 request :: Transport t => t -> Message -> IO Response
 request conn msg = do
+    -- print ("send", msg)
     sendmsg conn msg
     gather []
   where
     gather vals = do
         reply <- recvmsg conn
+        -- print ("recv", reply)
         case reply of
-            Msg.Success _meta -> return $ Success (reverse vals)
-            Msg.Failure _meta -> return Failed
-            Msg.Ignored _meta -> return Ignored
+            Msg.Success meta -> return $ Success meta (reverse vals)
+            Msg.Failure meta -> return $ Failed meta
+            Msg.Ignored meta -> return $ Ignored meta
             Msg.Record  val   -> gather (val : vals)
             _                 -> protocolErr "Unexpected message in response"
 
@@ -40,18 +42,18 @@ simple :: Transport t => t -> Message -> IO ()
 simple conn msg = do
     resp <- request conn msg
     case resp of
-        Success [] -> return ()
-        Success _  -> reqFail   "Request not expecting records"
-        Failed     -> reqFail   "Request failed"
-        Ignored    -> reqIgnore "Request ignored"
+        Success _    [] -> return ()
+        Success meta _  -> reqFail meta "Request not expecting records"
+        Failed  meta    -> reqFail meta "Request failed"
+        Ignored meta    -> reqIgnore meta "Request ignored"
 
 detail :: Transport t => t -> Message -> IO [Record]
 detail conn msg = do
     resp <- request conn msg
     case resp of
-        Success rs -> return rs
-        Failed     -> reqFail   "Request failed"
-        Ignored    -> reqIgnore "Request ignored"
+        Success _    rs -> return rs
+        Failed  meta    -> reqFail   meta "Request failed"
+        Ignored meta    -> reqIgnore meta "Request ignored"
 
 init :: Transport t => t -> UserAgent -> AuthToken -> IO ()
 init conn agent auth = simple conn $ Msg.Init agent auth

@@ -9,6 +9,7 @@ where
 import qualified Data.HashMap.Strict               as HM
 import           Data.PackStream
 import           Data.Text                         (Text)
+import qualified Data.Text                         as T
 
 import           Database.Bolt.Protocol.Ver1.Types
 
@@ -49,8 +50,11 @@ instance FromPackStream Message where
             (Struct 0x70 [metadata])             -> Success <$> parsePackStream metadata
             (Struct 0x71 [record])               -> Record <$> parsePackStream record
             (Struct 0x7e [metadata])             -> Ignored <$> parsePackStream metadata
+            (Struct 0x7e [])                     -> return $ Ignored mempty
             (Struct 0x7f [metadata])             -> Failure <$> parsePackStream metadata
-            _                                    -> error "Invalid Message"
+            (Struct 0x7f [])                     -> return $ Failure mempty
+            (Struct sn xs)                       -> error $ "Invalid Message: " ++ T.unpack (pretty (Struct sn xs))
+            _                                    -> error "Invalid Message (not a struct)"
 
 data AuthToken = NoAuth
                | Basic Principal Credentials

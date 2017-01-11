@@ -37,6 +37,7 @@ library
                      , Database.Bolt.Transport.Chunked
                      , Database.Bolt.Transport.Message
                      , Database.Bolt.Transport.Socket
+                     , Database.Bolt.Types
   build-depends:       base                 >= 4.8    && < 5
                      , bifunctors           >= 5.2    && < 5.5
                      , bytestring           >= 0.10.6 && < 0.11

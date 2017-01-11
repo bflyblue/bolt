@@ -11,7 +11,6 @@ module Database.Bolt.Protocol.Ver1.Transaction
 import           Control.Exception
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Reader
--- import           Database.Bolt.Exception
 import qualified Data.HashMap.Strict                 as HM
 import           Database.Bolt.Protocol.Ver1.Request
 import           Database.Bolt.Protocol.Ver1.Types
@@ -28,7 +27,7 @@ runTransaction conn t = do
     r <- try $ runReaderT (unTransaction t) conn
     case r of
         Left (SomeException ex) -> do
-            _ <- exec conn "ROLLBACK" HM.empty
+            reset conn
             throwIO ex
         Right a -> do
             _ <- exec conn "COMMIT" HM.empty

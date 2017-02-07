@@ -22,11 +22,13 @@ data Response = Success Metadata [Record]
               | Failed Metadata
               | Ignored Metadata
 
-request :: Transport t => t -> Message -> IO Response
-request conn msg = do
+sendRequest :: Transport t => t -> Message -> IO ()
+sendRequest =
     -- print ("send", msg)
-    sendmsg conn msg
-    gather []
+    sendmsg
+
+getResponse :: Transport t => t -> IO Response
+getResponse conn = gather []
   where
     gather vals = do
         reply <- recvmsg conn
@@ -37,6 +39,11 @@ request conn msg = do
             Msg.Ignored meta -> return $ Ignored meta
             Msg.Record  val   -> gather (val : vals)
             _                 -> protocolErr "Unexpected message in response"
+
+request :: Transport t => t -> Message -> IO Response
+request conn msg = do
+    sendRequest conn msg
+    getResponse conn
 
 simple :: Transport t => t -> Message -> IO ()
 simple conn msg = do

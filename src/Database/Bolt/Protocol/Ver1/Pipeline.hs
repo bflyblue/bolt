@@ -1,7 +1,9 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database.Bolt.Protocol.Ver1.Pipeline where
 
+import           Control.Monad
 import           Control.Concurrent
 import           Control.Monad.IO.Class
 import           Database.Bolt.Exception
@@ -14,52 +16,46 @@ import           Database.Bolt.Transport.Message
 data Response = Success Metadata [Record]
               | Failed Metadata
               | Ignored Metadata
+    deriving (Show)
 
 data Command = GetResponse (MVar Response)
              | Done
 
 data Pipeline t = Pipeline t (MVar Command)
 
-data Pipe a = PVal (IO a)
-            | PVar (IO (MVar a))
+data Pipe a = forall b. PVal (b -> IO a) (IO b)
 
 instance Functor Pipe where
-    fmap g a = PVal $ fmap g (runPipe a)
-    -- fmap g (PVal a) = PVal (fmap g a)
-    -- fmap g (PVar a) = PVal (fmap g (readMVar =<< a))
+    fmap g (PVal f a) = PVal (return . g <=< f) a
 
 instance Applicative Pipe where
-    pure = PVal . return
-    -- f <*> a = PVal $ runPipe f <*> runPipe a
-    PVal f <*> PVal a = PVal (f <*> a)
-    PVal f <*> PVar a =
-        PVal $ do
-            a' <- a
-            f <*> readMVar a'
-    PVar f <*> PVal a =
-        PVal $ do
-            f' <- f
-            readMVar f' <*> a
-    PVar f <*> PVar a =
-        PVal $ do
-            f' <- f
-            a' <- a
-            readMVar f' <*> readMVar a'
+    pure a = PVal return (return a)
+    PVal g1 a1 <*> PVal g2 a2 =
+        PVal
+          ( \(v1, v2) -> do
+                r1 <- g1 v1
+                r2 <- g2 v2
+                return $ r1 r2
+          )
+          ( do
+            v1 <- a1
+            v2 <- a2
+            return (v1, v2)
+          )
 
 instance Monad Pipe where
     return = pure
-    a >>= f = PVal $ runPipe a >>= runPipe . f
+    a >>= f = PVal return (runPipe a >>= runPipe . f)
 
 instance MonadIO Pipe where
-    liftIO = PVal
+    liftIO = PVal return
 
 runPipe :: Pipe a -> IO a
-runPipe (PVal a) = a
-runPipe (PVar v) = readMVar =<< v
+runPipe (PVal f a) = a >>= f
 
 request :: Transport t => Pipeline t -> Message -> Pipe Response
 request (Pipeline conn cvar) msg =
-    PVar $ do
+    PVal readMVar $ do
         rvar <- newEmptyMVar
         putMVar cvar (GetResponse rvar)
         print ("send", msg)

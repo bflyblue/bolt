@@ -55,12 +55,17 @@ runPipe (PVal f a) = a >>= f
 
 request :: Transport t => Pipeline t -> Message -> Pipe Response
 request (Pipeline conn cvar) msg =
-    PVal readMVar $ do
+    PVal go $ do
         rvar <- newEmptyMVar
         putMVar cvar (GetResponse rvar)
         print ("send", msg)
         sendmsg conn msg
         return rvar
+  where
+    go v = do
+        a <- readMVar v
+        print ("recv", a)
+        return a
 
 newPipeline :: Transport t => t -> IO (Pipeline t)
 newPipeline conn = do
@@ -80,7 +85,6 @@ gatherer conn cvar = do
   where
     gather vals = do
         reply <- recvmsg conn
-        print ("recv", reply)
         case reply of
             Msg.Success meta -> return $ Success meta (reverse vals)
             Msg.Failure meta -> return $ Failed meta

@@ -32,13 +32,19 @@ instance Applicative Pipe where
     pure = PVal . return
     -- f <*> a = PVal $ runPipe f <*> runPipe a
     PVal f <*> PVal a = PVal (f <*> a)
-    PVal f <*> PVar a = PVal (f <*> (readMVar =<< a))
-    PVar f <*> PVal a = PVal ((readMVar =<< f) <*> a)
+    PVal f <*> PVar a =
+        PVal $ do
+            a' <- a
+            f <*> readMVar a'
+    PVar f <*> PVal a =
+        PVal $ do
+            f' <- f
+            readMVar f' <*> a
     PVar f <*> PVar a =
         PVal $ do
-            v1 <- f
-            v2 <- a
-            readMVar v1 <*> readMVar v2
+            f' <- f
+            a' <- a
+            readMVar f' <*> readMVar a'
 
 instance Monad Pipe where
     return = pure

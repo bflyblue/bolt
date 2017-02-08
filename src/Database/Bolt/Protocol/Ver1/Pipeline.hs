@@ -39,7 +39,7 @@ data Response = Success Metadata [Record]
 data Command = GetResponse (MVar Response)
              | Done
 
-data Pipeline t = Pipeline t (MVar Command)
+data Pipeline t = Pipeline t (Chan Command)
 
 data Pipe a = forall b. Pipe (IO b) (b -> IO a)
 
@@ -68,19 +68,19 @@ runPipe (Pipe a f) = a >>= f
 
 newPipeline :: Transport t => t -> IO (Pipeline t)
 newPipeline conn = do
-    cvar <- newEmptyMVar
-    _ <- forkIO (gatherer conn cvar)
-    return $ Pipeline conn cvar
+    cmdchan <- newChan
+    _ <- forkIO (gatherer conn cmdchan)
+    return $ Pipeline conn cmdchan
 
-gatherer :: Transport t => t -> MVar Command -> IO ()
-gatherer conn cvar = do
-    cmd <- takeMVar cvar
+gatherer :: Transport t => t -> Chan Command -> IO ()
+gatherer conn cmdchan = do
+    cmd <- readChan cmdchan
     case cmd of
         Done -> return ()
         GetResponse rvar -> do
             reply <- gather []
             putMVar rvar reply
-            gatherer conn cvar
+            gatherer conn cmdchan
   where
     gather vals = do
         reply <- recvmsg conn
@@ -92,11 +92,11 @@ gatherer conn cvar = do
             _                 -> protocolErr "Unexpected message in response"
 
 request :: Transport t => Pipeline t -> Message -> Pipe Response
-request (Pipeline conn cvar) msg = Pipe sendreq getresp
+request (Pipeline conn cmdchan) msg = Pipe sendreq getresp
   where
     sendreq = do
         rvar <- newEmptyMVar
-        putMVar cvar (GetResponse rvar)
+        writeChan cmdchan (GetResponse rvar)
         print ("send", msg)
         sendmsg conn msg
         return rvar
@@ -140,7 +140,6 @@ run p stmt params = simple p $ Msg.Run stmt params
 
 exec :: Transport t => Pipeline t -> Statement -> Parameters -> Pipe [Record]
 exec p stmt params = run p stmt params *> pullAll p
--- exec p stmt params = run p stmt params >> pullAll p
 
 {- NOTE: Using ApplicativeDo
 

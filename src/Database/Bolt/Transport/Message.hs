@@ -10,7 +10,7 @@ import           Data.PackStream
 import qualified Data.Text                       as T
 
 import           Database.Bolt.Exception
-import           Database.Bolt.Transport         (Transport)
+import           Database.Bolt.Transport.Class
 import qualified Database.Bolt.Transport.Chunked as Chunked
 
 -------- Message I/O --------

@@ -27,7 +27,7 @@ import qualified Network.Socket.ByteString as NetBS
 import           Network.URI
 
 import           Database.Bolt.Exception
-import           Database.Bolt.Transport
+import           Database.Bolt.Transport.Class
 
 -------- Socket --------
 

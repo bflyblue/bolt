@@ -16,8 +16,8 @@ import           Data.Serialize.Put
 import qualified Data.Text               as T
 
 import           Database.Bolt.Exception
-import           Database.Bolt.Transport (Transport)
-import qualified Database.Bolt.Transport as Trans
+import           Database.Bolt.Transport.Class (Transport)
+import qualified Database.Bolt.Transport.Class as Trans
 
 -------- Chunked I/O --------
 

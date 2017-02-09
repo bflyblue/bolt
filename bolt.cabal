@@ -36,6 +36,8 @@ library
                      , Database.Bolt.Protocol.Ver1.Types
                      , Database.Bolt.Transport
                      , Database.Bolt.Transport.Chunked
+                     , Database.Bolt.Transport.Class
+                     , Database.Bolt.Transport.Handshake
                      , Database.Bolt.Transport.Message
                      , Database.Bolt.Transport.Socket
                      , Database.Bolt.Types

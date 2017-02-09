@@ -23,6 +23,7 @@ import           Database.Bolt.Protocol.Ver1.Request     (exec, init)
 import           Database.Bolt.Protocol.Ver1.Transaction (Transaction, cypher, runTransaction)
 import           Database.Bolt.Protocol.Ver1.Types
 import           Database.Bolt.Transport
+import           Database.Bolt.Transport.Handshake
 
 useragent :: UserAgent
 useragent = "haskell-bolt/0.0"

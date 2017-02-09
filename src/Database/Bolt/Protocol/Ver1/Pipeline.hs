@@ -29,7 +29,6 @@ import           Database.Bolt.Protocol.Ver1.Message (AuthToken, Message)
 import qualified Database.Bolt.Protocol.Ver1.Message as Msg
 import           Database.Bolt.Protocol.Ver1.Types
 import           Database.Bolt.Transport
-import           Database.Bolt.Transport.Message
 
 data Response = Success Metadata [Record]
               | Failed Metadata

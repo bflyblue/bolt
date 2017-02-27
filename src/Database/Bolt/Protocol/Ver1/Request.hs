@@ -1,82 +1,102 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE Rank2Types #-}
 
-module Database.Bolt.Protocol.Ver1.Request
- ( init
- , reset
- , discardAll
- , pullAll
- , run
- , exec
- ) where
+module Database.Bolt.Protocol.Ver1.Request where
+ -- ( init
+ -- , reset
+ -- , discardAll
+ -- , pullAll
+ -- , run
+ -- , exec
+ -- ) where
 
 import           Prelude                             hiding (init)
 
-import           Database.Bolt.Exception
+import           Control.Monad.Except
+import           Data.Monoid
+import           Data.PackStream
+import           Data.String
 import           Database.Bolt.Protocol.Ver1.Message (AuthToken, Message)
 import qualified Database.Bolt.Protocol.Ver1.Message as Msg
+import           Database.Bolt.Protocol.Ver1.Response as Resp
+-- import           Database.Bolt.Protocol.Ver1.Request.Class
 import           Database.Bolt.Protocol.Ver1.Types
-import           Database.Bolt.Transport
+import           Database.Bolt.Transport.Class
+import           Data.Serialize.Get
+import           Data.Serialize.Put
 
-data Response = Success Metadata [Record]
-              | Failed Metadata
-              | Ignored Metadata
-
-sendRequest :: Transport t => t -> Message -> IO ()
-sendRequest =
-    -- print ("send", msg)
-    sendmsg
-
-getResponse :: Transport t => t -> IO Response
-getResponse conn = gather []
+request :: (Transport m t, MonadError (e, Metadata) m, IsString e) => t -> Message -> m Message -- Response
+request conn msg = do
+    let bs = runPutLazy (pack msg)
+    rbs <- message conn bs
+    let reply = runGetLazy unpack rbs
+    case reply of
+        Left  err  -> requestError "Unable to decode response" mempty
+        Right rmsg -> case rmsg of
+            Left  err  -> requestError "Unable to unpack response" mempty
+            Right resp -> return resp
   where
     gather vals = do
-        reply <- recvmsg conn
-        -- print ("recv", reply)
+        rbs <- message conn bs
+        let reply = runGetLazy unpack rbs
         case reply of
-            Msg.Success meta -> return $ Success meta (reverse vals)
-            Msg.Failure meta -> return $ Failed meta
-            Msg.Ignored meta -> return $ Ignored meta
-            Msg.Record  val   -> gather (val : vals)
-            _                 -> protocolErr "Unexpected message in response"
+            Msg.Success meta -> return $ Resp.Success meta (reverse vals)
+            Msg.Failure meta -> return $ Resp.Failed meta
+            Msg.Ignored meta -> return $ Resp.Ignored meta
+            Msg.Record  val  -> gather (val : vals)
+            _                -> protocolErr "Unexpected message in response"
 
-request :: Transport t => t -> Message -> IO Response
-request conn msg = do
-    sendRequest conn msg
-    getResponse conn
+requestError :: (IsString e, MonadError (e, Metadata) m) => e -> Metadata -> m a
+requestError msg meta = throwError (msg, meta)
 
-simple :: Transport t => t -> Message -> IO ()
+-- simple :: (IsString e, Request m t, MonadError (e, Metadata) m) => t -> Message -> m ()
 simple conn msg = do
     resp <- request conn msg
-    case resp of
-        Success _    [] -> return ()
-        Success meta _  -> reqFail meta "Request not expecting records"
-        Failed  meta    -> reqFail meta "Request failed"
-        Ignored meta    -> reqIgnore meta "Request ignored"
+    return resp
+    -- case resp of
+    --     Success _meta [] -> return ()
+    --     Success meta  _  -> requestError "Request not expecting records" meta
+    --     Failed  meta     -> requestError "Request failed" meta
+    --     Ignored meta     -> requestError "Request ignored" meta
 
-detail :: Transport t => t -> Message -> IO [Record]
-detail conn msg = do
-    resp <- request conn msg
-    case resp of
-        Success _    rs -> return rs
-        Failed  meta    -> reqFail   meta "Request failed"
-        Ignored meta    -> reqIgnore meta "Request ignored"
+-- detail :: (IsString e, Request m t, MonadError (e, Metadata) m) => t -> Message -> m [Record]
+-- detail conn msg = do
+--     resp <- request conn msg
+--     case resp of
+--         Success _    recs -> return recs
+--         Failed  meta      -> requestError "Request failed" meta
+--         Ignored meta      -> requestError "Request ignored" meta
+--
+-- init :: (IsString e, MonadError (e, Metadata) m, Request m t) => t -> UserAgent -> AuthToken -> m ()
+-- init conn agent auth = simple conn $ Msg.Init agent auth
+--
+-- reset :: (IsString e, MonadError (e, Metadata) m, Request m t) => t -> m ()
+-- reset conn = simple conn Msg.Reset
+--
+-- discardAll :: (MonadError (e, Metadata) m, Request m t, IsString e) => t -> m ()
+-- discardAll conn = simple conn Msg.DiscardAll
+--
+-- pullAll :: (MonadError (e, Metadata) m, Request m t, IsString e) => t -> m [Record]
+-- pullAll conn = detail conn Msg.PullAll
+--
+-- run :: (MonadError (e, Metadata) m, Request m t, IsString e) => t -> Statement -> Parameters -> m ()
+-- run conn stmt params = simple conn $ Msg.Run stmt params
+--
+-- exec :: (IsString e, Request f t, MonadError (e, Metadata) f) => t -> Statement -> Parameters -> f [Record]
+-- exec conn stmt params = run conn stmt params *> pullAll conn
+{-  We use the applicative here so if m ~ Pipe things proceed asynchronously
 
-init :: Transport t => t -> UserAgent -> AuthToken -> IO ()
-init conn agent auth = simple conn $ Msg.Init agent auth
+    NOTE: Using ApplicativeDo
 
-reset :: Transport t => t -> IO ()
-reset conn = simple conn Msg.Reset
+    exec conn stmt params = do
+        run p stmt params
+        pullAll p
 
-discardAll :: Transport t => t -> IO ()
-discardAll conn = simple conn Msg.DiscardAll
+    does not currently do the right thing.
 
-pullAll :: Transport t => t -> IO [Record]
-pullAll conn = detail conn Msg.PullAll
+    See: https://ghc.haskell.org/trac/ghc/ticket/10892
+-}
 
-run :: Transport t => t -> Statement -> Parameters -> IO ()
-run conn stmt params = simple conn $ Msg.Run stmt params
-
-exec :: Transport t => t -> Statement -> Parameters -> IO [Record]
-exec conn stmt params = do
-    run conn stmt params
-    pullAll conn
+-- exec_ :: (IsString e, Request f t, MonadError (e, Metadata) f) => t -> Statement -> Parameters -> f ()
+-- exec_ conn stmt params = run conn stmt params *> pullAll conn *> pure ()

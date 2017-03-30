@@ -1,5 +1,5 @@
 name:                bolt
-version:             0.3.0.1
+version:             0.3.1.0
 synopsis:            Bolt driver for Neo4j
 description:
     A Bolt driver to access Neo4j databases using

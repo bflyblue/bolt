@@ -1,6 +1,6 @@
 cabal-version: 3.8
 name: bolt
-version: 0.3.2.0
+version: 0.4.0.0
 synopsis: Bolt driver for Neo4j
 description: A Bolt driver to access Neo4j databases using the Bolt Protocol. <https://boltprotocol.org/>
 homepage: https://github.com/bflyblue/bolt#readme
@@ -47,7 +47,7 @@ library
     Database.Bolt.Types
 
   build-depends:
-    base >=4.8 && <5,
+    base >=4.9 && <5,
     bifunctors >=5.2 && <5.7,
     bytestring >=0.10.6 && <0.13,
     cereal >=0.5.4 && <0.6,
@@ -67,7 +67,7 @@ test-suite test-bolt
   hs-source-dirs: test
   main-is: Spec.hs
   build-depends:
-    base,
+    base >=4.9 && <5,
     bolt,
     bytestring >=0.10.6 && <0.13,
     cereal >=0.5.4 && <0.6,

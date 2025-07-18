@@ -18,7 +18,6 @@ module Database.Bolt.Transport.Socket (
 
 import Control.Exception
 import Control.Monad
-import Data.Monoid
 import Data.Text qualified as T
 import Network.Socket qualified as Net
 import Network.Socket.ByteString qualified as NetBS

@@ -10,7 +10,6 @@ module Database.Bolt.Transport.Chunked (
 
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as LBS
-import Data.Monoid
 import Data.Serialize.Get
 import Data.Serialize.Put
 import Data.Text qualified as T

@@ -5,7 +5,6 @@ module Database.Bolt.Transport.Message (
   recvmsg,
 ) where
 
-import Data.Monoid
 import Data.PackStream
 import Data.Text qualified as T
 

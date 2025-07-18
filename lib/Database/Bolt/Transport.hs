@@ -12,7 +12,6 @@ module Database.Bolt.Transport (
 ) where
 
 import Data.ByteString qualified as BS
-import Data.Monoid
 import Data.Serialize.Get
 import Data.Serialize.Put
 import Data.Text as T

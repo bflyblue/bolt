@@ -32,7 +32,6 @@ import Data.HashMap.Strict qualified as HM
 import Data.Hashable
 import Data.Int
 import Data.Map.Strict qualified as M
-import Data.Monoid
 import Data.Scientific
 import Data.Serialize.Get
 import Data.Serialize.IEEE754

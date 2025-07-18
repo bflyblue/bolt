@@ -15,10 +15,7 @@ build-type: Simple
 extra-source-files: README.md
 
 common common
-  ghc-options:
-    -Wall
-    -O
-
+  ghc-options: -Wall
   default-language: GHC2021
 
 library
@@ -64,6 +61,7 @@ library
     vector >=0.11.0 && <0.14,
 
 test-suite test-bolt
+  import: common
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Spec.hs

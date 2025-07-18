@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database.Bolt.Protocol.Ver1.Message (
@@ -14,16 +15,16 @@ import Data.Text qualified as T
 import Database.Bolt.Protocol.Ver1.Types
 
 data Message
-  = Init UserAgent AuthToken
+  = Init !UserAgent !AuthToken
   | AckFailure
   | Reset
-  | Run Statement Parameters
+  | Run !Statement !Parameters
   | DiscardAll
   | PullAll
-  | Success Metadata
-  | Ignored Metadata
-  | Failure Metadata
-  | Record Record
+  | Success !Metadata
+  | Ignored !Metadata
+  | Failure !Metadata
+  | Record !Record
   deriving (Show)
 
 instance ToPackStream Message where
@@ -55,17 +56,17 @@ instance FromPackStream Message where
       (Struct 0x7f [metadata]) -> Failure <$> parsePackStream metadata
       (Struct 0x7f []) -> return $ Failure mempty
       (Struct sn xs) -> error $ "Invalid Message: " ++ T.unpack (pretty (Struct sn xs))
-      _ -> error "Invalid Message (not a struct)"
+      _other -> error "Invalid Message (not a struct)"
 
 data AuthToken
   = NoAuth
-  | Basic Principal Credentials
+  | Basic !Principal !Credentials
   deriving (Show)
 
 instance ToPackStream AuthToken where
-  toPackStream NoAuth = Map $ HM.fromList ["scheme" .= ("none" :: Text)]
+  toPackStream NoAuth = Dict $ HM.fromList ["scheme" .= ("none" :: Text)]
   toPackStream (Basic user pass) =
-    Map $
+    Dict $
       HM.fromList
         [ "scheme" .= ("basic" :: Text)
         , "principal" .= user
@@ -73,7 +74,7 @@ instance ToPackStream AuthToken where
         ]
 
 instance FromPackStream AuthToken where
-  parsePackStream (Map m) = do
+  parsePackStream (Dict m) = do
     scheme <- m .:? "scheme" .!= "none"
     parseScheme scheme
    where

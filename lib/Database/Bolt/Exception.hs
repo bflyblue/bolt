@@ -12,12 +12,12 @@ import Data.Text (Text)
 import Database.Bolt.Types
 
 data BoltException
-  = AuthenticationFailure Text
-  | RequestFailure Object Text
-  | RequestIgnored Object Text
-  | InternalError Text
-  | TransportError Text
-  | ProtocolError Text
+  = AuthenticationFailure !Text
+  | RequestFailure !Object !Text
+  | RequestIgnored !Object !Text
+  | InternalError !Text
+  | TransportError !Text
+  | ProtocolError !Text
   deriving (Show)
 
 instance Exception BoltException

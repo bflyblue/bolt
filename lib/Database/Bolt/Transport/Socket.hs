@@ -37,8 +37,8 @@ instance Transport Connection where
   close = Net.close . connSocket
 
 data ConnInfo = ConnInfo
-  { connHost :: Net.HostName
-  , connService :: Net.ServiceName
+  { connHost :: !Net.HostName
+  , connService :: !Net.ServiceName
   }
   deriving (Show, Read, Eq, Ord)
 

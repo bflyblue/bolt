@@ -36,11 +36,14 @@ type Properties = Object
 type Metadata = Object
 type Record = [PackStream]
 
+infixl 9 #=
 (#=) :: (ToPackStream a) => Text -> a -> (Text, PackStream)
 k #= v = (k, toPackStream v)
 
+infixl 9 #:
 (#:) :: (FromPackStream a) => Object -> Text -> Parser a
 m #: k = maybe (parsefail "Expected Key missing in object") parsePackStream (HM.lookup k m)
 
+infixl 9 #:?
 (#:?) :: (FromPackStream a) => Object -> Text -> Parser (Maybe a)
 m #:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup k m)

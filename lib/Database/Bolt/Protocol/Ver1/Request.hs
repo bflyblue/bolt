@@ -19,9 +19,9 @@ import Database.Bolt.Transport
 import Database.Bolt.Transport.Message
 
 data Response
-  = Success Metadata [Record]
-  | Failed Metadata
-  | Ignored Metadata
+  = Success !Metadata ![Record]
+  | Failed !Metadata
+  | Ignored !Metadata
 
 request :: (Transport t) => t -> Message -> IO Response
 request conn msg = do
@@ -37,7 +37,7 @@ request conn msg = do
       Msg.Failure meta -> return $ Failed meta
       Msg.Ignored meta -> return $ Ignored meta
       Msg.Record val -> gather (val : vals)
-      _ -> protocolErr "Unexpected message in response"
+      _other -> protocolErr "Unexpected message in response"
 
 simple :: (Transport t) => t -> Message -> IO ()
 simple conn msg = do

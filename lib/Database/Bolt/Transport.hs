@@ -47,7 +47,7 @@ type BoltProtocol = Word32
 noProto :: BoltProtocol
 noProto = 0
 
-data OfferProtocols = OfferProtocols BoltProtocol BoltProtocol BoltProtocol BoltProtocol
+data OfferProtocols = OfferProtocols !BoltProtocol !BoltProtocol !BoltProtocol !BoltProtocol
   deriving (Show, Eq, Ord)
 
 handshake :: (Transport t) => t -> OfferProtocols -> IO BoltProtocol

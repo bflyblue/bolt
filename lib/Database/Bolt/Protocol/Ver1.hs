@@ -25,7 +25,7 @@ import Database.Bolt.Protocol.Ver1.Types
 import Database.Bolt.Transport
 
 useragent :: UserAgent
-useragent = "haskell-bolt/0.0"
+useragent = "haskell-bolt/0.4"
 
 open :: (Transport t) => (a -> IO t) -> a -> AuthToken -> IO t
 open c a auth = do

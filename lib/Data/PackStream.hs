@@ -50,6 +50,7 @@ data PackStream
   | Bool !Bool
   | Int !Int64
   | Float !Double
+  | Bytes !BS.ByteString
   | String !Text
   | List !(V.Vector PackStream)
   | Map !(HM.HashMap PackStream PackStream)
@@ -177,6 +178,9 @@ getPackStream = do
     | marker == 0xc9 -> Int . fromIntegral <$> getInt16be
     | marker == 0xca -> Int . fromIntegral <$> getInt32be
     | marker == 0xcb -> Int . fromIntegral <$> getInt64be
+    | marker == 0xcc -> fromIntegral <$> getWord8 >>= getBytes'
+    | marker == 0xcd -> fromIntegral <$> getWord16be >>= getBytes'
+    | marker == 0xce -> fromIntegral <$> getWord32be >>= getBytes'
     | 0x80 <= marker && marker < 0x90 ->
         getString (fromIntegral marker .&. 0x0f)
     | marker == 0xd0 -> fromIntegral <$> getWord8 >>= getString
@@ -197,6 +201,9 @@ getPackStream = do
     | marker == 0xdc -> fromIntegral <$> getWord8 >>= getStruct
     | marker == 0xdd -> fromIntegral <$> getWord16be >>= getStruct
     | otherwise -> fail $ "Unknown marker " ++ printf "0x%02x" marker
+
+getBytes' :: Int -> Get PackStream
+getBytes' n = Bytes . BS.pack <$> replicateM n getWord8
 
 getString :: Int -> Get PackStream
 getString n = String . T.decodeUtf8 <$> getByteString n
@@ -223,6 +230,15 @@ putPackStream (Int i)
   | -0x8000 <= i && i < 0x8000 = putWord8 0xc9 >> putInt16be (fromIntegral i)
   | -0x80000000 <= i && i < 0x80000000 = putWord8 0xca >> putInt32be (fromIntegral i)
   | otherwise = putWord8 0xcb >> putInt64be (fromIntegral i)
+putPackStream (Bytes bstr) = do
+  let size = BS.length bstr
+  if
+    | size < 0x10 -> putWord8 (0x80 + fromIntegral size)
+    | size < 0x100 -> putWord8 0xd0 >> putWord8 (fromIntegral size)
+    | size < 0x10000 -> putWord8 0xd1 >> putWord16be (fromIntegral size)
+    | size < 0x100000000 -> putWord8 0xd2 >> putWord32be (fromIntegral size)
+    | otherwise -> error "Bytes too long"
+  putByteString bstr
 putPackStream (String t) = do
   let bstr = T.encodeUtf8 t
       size = BS.length bstr
@@ -272,6 +288,7 @@ prettyStruct _ (Bool True) = "true"
 prettyStruct _ (Bool False) = "false"
 prettyStruct _ (Int i) = T.pack (show i)
 prettyStruct _ (Float d) = T.pack (show d)
+prettyStruct _ (Bytes bstr) = "b\"" <> T.pack (show (BS.length bstr)) <> "\""
 prettyStruct _ (String t) = "\"" <> t <> "\""
 prettyStruct _ (List xs) = "[" <> T.intercalate ", " (pretty <$> V.toList xs) <> "]"
 prettyStruct _ (Map ps) = "{" <> T.intercalate ", " (fmap (\(k, v) -> pretty k <> ": " <> pretty v) (HM.toList ps)) <> "}"

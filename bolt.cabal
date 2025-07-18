@@ -13,6 +13,7 @@ copyright: (c) 2025 Shaun Sharples
 category: Database
 build-type: Simple
 extra-source-files: README.md
+extra-doc-files: Changelog.md
 
 common common
   ghc-options: -Wall

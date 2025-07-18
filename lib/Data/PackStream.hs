@@ -53,8 +53,8 @@ data PackStream
   | Bytes !BS.ByteString
   | String !Text
   | List !(V.Vector PackStream)
-  | Map !(HM.HashMap PackStream PackStream)
-  | Struct !Word8 ![PackStream]
+  | Dict !(HM.HashMap PackStream PackStream)
+  | Struct !Word8 !(V.Vector PackStream)
   deriving (Show, Eq, Generic, Hashable)
 
 type Parser = Either String
@@ -102,20 +102,20 @@ instance (FromPackStream a) => FromPackStream (V.Vector a) where
   parsePackStream _ = parsefail "Expecting List"
 
 instance (Eq a, Hashable a, FromPackStream a, FromPackStream b) => FromPackStream (HM.HashMap a b) where
-  parsePackStream (Map m) = do
+  parsePackStream (Dict m) = do
     kvs <- mapM parseAssoc (HM.toList m)
     return $ HM.fromList kvs
    where
     parseAssoc (k, v) = (,) <$> parsePackStream k <*> parsePackStream v
-  parsePackStream _ = parsefail "Expecting Map"
+  parsePackStream _ = parsefail "Expecting Dict"
 
 instance (Ord a, FromPackStream a, FromPackStream b) => FromPackStream (M.Map a b) where
-  parsePackStream (Map m) = do
+  parsePackStream (Dict m) = do
     kvs <- mapM parseAssoc (HM.toList m)
     return $ M.fromList kvs
    where
     parseAssoc (k, v) = (,) <$> parsePackStream k <*> parsePackStream v
-  parsePackStream _ = parsefail "Expecting Map"
+  parsePackStream _ = parsefail "Expecting Dict"
 
 instance FromPackStream Scientific where
   parsePackStream (Int i) = return $ fromIntegral i
@@ -147,10 +147,10 @@ instance (ToPackStream a) => ToPackStream (V.Vector a) where
   toPackStream = List . fmap toPackStream
 
 instance (ToPackStream a, ToPackStream b) => ToPackStream (M.Map a b) where
-  toPackStream = Map . HM.fromList . fmap (bimap toPackStream toPackStream) . M.toList
+  toPackStream = Dict . HM.fromList . fmap (bimap toPackStream toPackStream) . M.toList
 
 instance (ToPackStream a, ToPackStream b) => ToPackStream (HM.HashMap a b) where
-  toPackStream = Map . HM.fromList . fmap (bimap toPackStream toPackStream) . HM.toList
+  toPackStream = Dict . HM.fromList . fmap (bimap toPackStream toPackStream) . HM.toList
 
 instance ToPackStream Scientific where
   toPackStream s =
@@ -192,10 +192,10 @@ getPackStream = do
     | marker == 0xd5 -> fromIntegral <$> getWord16be >>= getList
     | marker == 0xd6 -> fromIntegral <$> getWord32be >>= getList
     | 0xa0 <= marker && marker < 0xb0 ->
-        getMap (fromIntegral marker .&. 0x0f)
-    | marker == 0xd8 -> fromIntegral <$> getWord8 >>= getMap
-    | marker == 0xd9 -> fromIntegral <$> getWord16be >>= getMap
-    | marker == 0xda -> fromIntegral <$> getWord32be >>= getMap
+        getDict (fromIntegral marker .&. 0x0f)
+    | marker == 0xd8 -> fromIntegral <$> getWord8 >>= getDict
+    | marker == 0xd9 -> fromIntegral <$> getWord16be >>= getDict
+    | marker == 0xda -> fromIntegral <$> getWord32be >>= getDict
     | 0xb0 <= marker && marker < 0xc0 ->
         getStruct (fromIntegral marker .&. 0x0f)
     | marker == 0xdc -> fromIntegral <$> getWord8 >>= getStruct
@@ -209,15 +209,15 @@ getString :: Int -> Get PackStream
 getString n = String . T.decodeUtf8 <$> getByteString n
 
 getList :: Int -> Get PackStream
-getList n = List . V.fromList <$> replicateM n getPackStream
+getList n = List <$> V.replicateM n getPackStream
 
-getMap :: Int -> Get PackStream
-getMap n = Map . HM.fromList <$> replicateM n getPair
+getDict :: Int -> Get PackStream
+getDict n = Dict . HM.fromList <$> replicateM n getPair
  where
   getPair = (,) <$> getPackStream <*> getPackStream
 
 getStruct :: Int -> Get PackStream
-getStruct n = Struct <$> getWord8 <*> replicateM n getPackStream
+getStruct n = Struct <$> getWord8 <*> V.replicateM n getPackStream
 
 putPackStream :: Putter PackStream
 putPackStream Null = putWord8 0xc0
@@ -246,25 +246,25 @@ putPackStream (String t) = do
     | size < 0x10 -> putWord8 (0x80 + fromIntegral size)
     | size < 0x100 -> putWord8 0xd0 >> putWord8 (fromIntegral size)
     | size < 0x10000 -> putWord8 0xd1 >> putWord16be (fromIntegral size)
-    | size < 0x100000000 -> putWord8 0xd2 >> putWord16be (fromIntegral size)
+    | size < 0x100000000 -> putWord8 0xd2 >> putWord32be (fromIntegral size)
     | otherwise -> error "String too long"
-  putByteString $ T.encodeUtf8 t
+  putByteString bstr
 putPackStream (List xs) = do
   let size = V.length xs
   if
     | size < 0x10 -> putWord8 (0x90 + fromIntegral size)
     | size < 0x100 -> putWord8 0xd4 >> putWord8 (fromIntegral size)
     | size < 0x10000 -> putWord8 0xd5 >> putWord16be (fromIntegral size)
-    | size < 0x100000000 -> putWord8 0xd6 >> putWord16be (fromIntegral size)
+    | size < 0x100000000 -> putWord8 0xd6 >> putWord32be (fromIntegral size)
     | otherwise -> error "List too long"
   mapM_ putPackStream xs
-putPackStream (Map m) = do
+putPackStream (Dict m) = do
   let size = HM.size m
   if
     | size < 0x10 -> putWord8 (0xa0 + fromIntegral size)
     | size < 0x100 -> putWord8 0xd8 >> putWord8 (fromIntegral size)
     | size < 0x10000 -> putWord8 0xd9 >> putWord16be (fromIntegral size)
-    | size < 0x100000000 -> putWord8 0xda >> putWord16be (fromIntegral size)
+    | size < 0x100000000 -> putWord8 0xda >> putWord32be (fromIntegral size)
     | otherwise -> error "Map too large"
   mapM_ (uncurry putPair) (HM.toList m)
  where
@@ -291,21 +291,25 @@ prettyStruct _ (Float d) = T.pack (show d)
 prettyStruct _ (Bytes bstr) = "b\"" <> T.pack (show (BS.length bstr)) <> "\""
 prettyStruct _ (String t) = "\"" <> t <> "\""
 prettyStruct _ (List xs) = "[" <> T.intercalate ", " (pretty <$> V.toList xs) <> "]"
-prettyStruct _ (Map ps) = "{" <> T.intercalate ", " (fmap (\(k, v) -> pretty k <> ": " <> pretty v) (HM.toList ps)) <> "}"
-prettyStruct sn (Struct s fs) = sn s <> "{" <> T.intercalate ", " (pretty <$> fs) <> "}"
+prettyStruct _ (Dict ps) = "{" <> T.intercalate ", " (fmap (\(k, v) -> pretty k <> ": " <> pretty v) (HM.toList ps)) <> "}"
+prettyStruct sn (Struct s fs) = sn s <> "{" <> T.intercalate ", " (pretty <$> V.toList fs) <> "}"
 
 genericStructName :: Word8 -> Text
 genericStructName n = "Struct(signature=" <> T.pack (printf "0x%02x" n) <> ")"
 
+infixr 8 .=
 (.=) :: (ToPackStream a) => Text -> a -> (PackStream, PackStream)
 k .= v = (String k, toPackStream v)
 
+infixr 8 .:
 (.:) :: (FromPackStream a) => HM.HashMap PackStream PackStream -> Text -> Parser a
 m .: k = maybe (parsefail "Expected Key missing in map") parsePackStream (HM.lookup (String k) m)
 
+infixr 8 .:?
 (.:?) :: (FromPackStream a) => HM.HashMap PackStream PackStream -> Text -> Parser (Maybe a)
 m .:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup (String k) m)
 
+infixr 8 .!=
 (.!=) :: Parser (Maybe a) -> a -> Parser a
 p .!= d = do
   ma <- p

@@ -40,14 +40,10 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 import Data.Vector qualified as V
+import Data.Vector.Instances ()
 import Data.Word
 import GHC.Generics (Generic)
 import Text.Printf
-
--- Orphan instance should go away once vector-instances 0.4 is available
-instance (Hashable a) => Hashable (V.Vector a) where
-  hashWithSalt salt = hashWithSalt salt . V.toList
-  {-# INLINE hashWithSalt #-}
 
 data PackStream
   = Null

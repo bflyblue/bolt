@@ -301,15 +301,15 @@ infixr 8 .=
 (.=) :: (ToPackStream a) => Text -> a -> (PackStream, PackStream)
 k .= v = (String k, toPackStream v)
 
-infixr 8 .:
+infixl 9 .:
 (.:) :: (FromPackStream a) => HM.HashMap PackStream PackStream -> Text -> Parser a
 m .: k = maybe (parsefail "Expected Key missing in map") parsePackStream (HM.lookup (String k) m)
 
-infixr 8 .:?
+infixl 9 .:?
 (.:?) :: (FromPackStream a) => HM.HashMap PackStream PackStream -> Text -> Parser (Maybe a)
 m .:? k = maybe (return Nothing) (fmap Just . parsePackStream) (HM.lookup (String k) m)
 
-infixr 8 .!=
+infixl 9 .!=
 (.!=) :: Parser (Maybe a) -> a -> Parser a
 p .!= d = do
   ma <- p

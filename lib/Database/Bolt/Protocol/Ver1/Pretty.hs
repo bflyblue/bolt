@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.Bolt.Protocol.Ver1.Pretty
- ( pretty
- , structName
- ) where
+module Database.Bolt.Protocol.Ver1.Pretty (
+  pretty,
+  structName,
+) where
 
-import           Data.PackStream (PackStream, genericStructName, prettyStruct)
-import           Data.Text
-import           Data.Word
+import Data.PackStream (PackStream, genericStructName, prettyStruct)
+import Data.Text
+import Data.Word
 
 pretty :: PackStream -> Text
 pretty = prettyStruct structName
@@ -27,4 +27,4 @@ structName 0x71 = "RecordMessage"
 structName 0x72 = "UnboundedRelationship"
 structName 0x7e = "IgnoredMessage"
 structName 0x7f = "FailureMessage"
-structName n    = genericStructName n
+structName n = genericStructName n

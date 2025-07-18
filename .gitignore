@@ -1,7 +1,6 @@
 *.dyn_hi
 *.dyn_o
 *.hi
-*.nix
 *.o
 .*.sw?
 .cabal-sandbox
@@ -13,3 +12,5 @@ tags
 .DS_Store
 *.refactored.*
 hscope.out
+.direnv/
+dist-newstyle/

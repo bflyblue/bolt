@@ -1,7 +1,7 @@
 # Bolt driver for Haskell
 
 I have started writing a basic Bolt driver to access Neo4j databases by
-implementing the [Bolt Protocol, Version 1](http://boltprotocol.org/v1/).
+implementing the [Bolt Protocol](http://boltprotocol.org/).
 
 ## Join In!
 
